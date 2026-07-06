@@ -1,0 +1,7 @@
+target/
+.env.local
+.env
+node_modules/
+frontend/.next/
+frontend/src/contracts/
+*.wasm
