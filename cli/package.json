@@ -1,0 +1,20 @@
+{
+  "name": "foxlock-cli",
+  "version": "0.1.0",
+  "description": "CLI tool for deploying and interacting with FoxLock Protocol escrow contracts on Stellar",
+  "bin": {
+    "foxlock": "./src/index.js"
+  },
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "^13.1.0",
+    "commander": "^12.1.0",
+    "chalk": "^5.3.0",
+    "ora": "^8.1.1",
+    "dotenv": "^16.4.7"
+  }
+}

@@ -60,7 +60,7 @@ soroban-milestone-escrow/
 - [Escrow Contract](https://stellar.expert/explorer/testnet/contract/CCQ7CUG4NZ6QSAG62OMCVYWXVPXJMBJF2WCA6WJRBZ3YOQ4K2DWN5RHV)
 - [Reputation Contract](https://stellar.expert/explorer/testnet/contract/CD2VIBP7TYVGW6NRFIM4WKUQDNUIIT2UB66CPF7K77DOO2WOMO4KB7U4)
 
-> **Organization:** [github.com/stellarfox-labs](https://github.com/stellarfox-labs)
+> **Organization:** [github.com/vaultfox-protocol](https://github.com/vaultfox-protocol)
 
 ---
 
@@ -205,4 +205,4 @@ Apache 2.0 — same as the Stellar ecosystem.
 Built as an OSS contribution to the GrantFox / GrantChain ecosystem.
 Inspired by Trustless Work and the Stellar Soroban example contracts.
 
-**Organization:** [github.com/stellarfox-labs](https://github.com/stellarfox-labs)
+**Organization:** [github.com/vaultfox-protocol](https://github.com/vaultfox-protocol)
