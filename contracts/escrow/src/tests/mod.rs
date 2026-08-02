@@ -11,7 +11,7 @@ mod test_deadline;
 /// Shared test helpers used across all test modules.
 pub mod helpers {
     use soroban_sdk::{
-        testutils::{Address as _, Ledger},
+        testutils::Ledger,
         token::{StellarAssetClient, TokenClient},
         Address, Env, String, Vec,
     };
@@ -25,14 +25,14 @@ pub mod helpers {
     }
 
     /// Deploy a mock SAC token and fund accounts.
-    pub fn deploy_token(env: &Env, admin: &Address) -> (Address, StellarAssetClient) {
+    pub fn deploy_token<'a>(env: &'a Env, admin: &Address) -> (Address, StellarAssetClient<'a>) {
         let token_id = env.register_stellar_asset_contract_v2(admin.clone());
         let sac = StellarAssetClient::new(env, &token_id.address());
         (token_id.address(), sac)
     }
 
     /// Mint tokens to an address.
-    pub fn mint(env: &Env, sac: &StellarAssetClient, to: &Address, amount: i128) {
+    pub fn mint(_env: &Env, sac: &StellarAssetClient, to: &Address, amount: i128) {
         sac.mint(to, &amount);
     }
 

@@ -27,24 +27,21 @@ fn test_dispute_resolution_split() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Dispute test"),
-        )
-        .unwrap();
+        );
 
     // Client raises dispute
-    escrow.raise_dispute(&client_addr, &id).unwrap();
+    escrow.raise_dispute(&client_addr, &id);
 
-    let record = escrow.get_escrow(&id).unwrap();
+    let record = escrow.get_escrow(&id);
     assert_eq!(record.status, EscrowStatus::Disputed);
 
     // Arbitrator splits 600/400
-    escrow
-        .resolve_dispute(&arbitrator_addr, &id, &600i128, &400i128)
-        .unwrap();
+    escrow.resolve_dispute(&arbitrator_addr, &id, &600i128, &400i128);
 
     assert_eq!(balance(&env, &token_addr, &client_addr), 600);
     assert_eq!(balance(&env, &token_addr, &contributor_addr), 400);
 
-    let record = escrow.get_escrow(&id).unwrap();
+    let record = escrow.get_escrow(&id);
     assert_eq!(record.status, EscrowStatus::Completed);
 }
 
@@ -70,10 +67,9 @@ fn test_dispute_resolution_wrong_amount() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Wrong split"),
-        )
-        .unwrap();
+        );
 
-    escrow.raise_dispute(&contributor_addr, &id).unwrap();
+    escrow.raise_dispute(&contributor_addr, &id);
 
     // Amounts don't sum to 1000
     let result = escrow.try_resolve_dispute(&arbitrator_addr, &id, &500i128, &400i128);
@@ -103,10 +99,9 @@ fn test_non_arbitrator_cannot_resolve() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Auth dispute"),
-        )
-        .unwrap();
+        );
 
-    escrow.raise_dispute(&client_addr, &id).unwrap();
+    escrow.raise_dispute(&client_addr, &id);
 
     let result = escrow.try_resolve_dispute(&impostor, &id, &500i128, &500i128);
     assert_eq!(result, Err(Ok(EscrowError::Unauthorized)));
@@ -134,8 +129,7 @@ fn test_third_party_cannot_raise_dispute() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Outsider test"),
-        )
-        .unwrap();
+        );
 
     let result = escrow.try_raise_dispute(&outsider, &id);
     assert_eq!(result, Err(Ok(EscrowError::Unauthorized)));
