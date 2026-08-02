@@ -20,7 +20,7 @@ Thank you for your interest in contributing to FoxLock Protocol! This project is
 ## How to Contribute
 
 ### Pick an Issue
-- Browse [open issues](https://github.com/foxchain-labs/foxlock-protocol/issues)
+- Browse [open issues](https://github.com/vaultfox-protocol/foxlock-protocol/issues)
 - Comment on the issue to express interest before starting
 - Wait for assignment confirmation
 
