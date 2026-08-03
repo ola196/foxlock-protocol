@@ -27,19 +27,16 @@ fn test_claim_after_deadline_succeeds() {
             &two_milestones(&env),
             &deadline,
             &String::from_str(&env, "Deadline test"),
-        )
-        .unwrap();
+        );
 
     // Advance past deadline
     advance_ledger(&env, 101);
 
-    escrow
-        .claim_after_deadline(&contributor_addr, &id)
-        .unwrap();
+    escrow.claim_after_deadline(&contributor_addr, &id);
 
     assert_eq!(balance(&env, &token_addr, &contributor_addr), 1000);
 
-    let record = escrow.get_escrow(&id).unwrap();
+    let record = escrow.get_escrow(&id);
     assert_eq!(record.status, EscrowStatus::Completed);
 }
 
@@ -65,8 +62,7 @@ fn test_claim_before_deadline_fails() {
             &two_milestones(&env),
             &deadline,
             &String::from_str(&env, "Too early"),
-        )
-        .unwrap();
+        );
 
     // Only advance 50 ledgers (still before deadline)
     advance_ledger(&env, 50);
@@ -97,28 +93,23 @@ fn test_partial_claim_after_deadline() {
             &two_milestones(&env),
             &deadline,
             &String::from_str(&env, "Partial deadline"),
-        )
-        .unwrap();
+        );
 
     // Client approves first milestone (500 released)
-    escrow
-        .submit_milestone(
-            &contributor_addr,
-            &id,
-            &0u32,
-            &String::from_str(&env, "proof"),
-        )
-        .unwrap();
-    escrow.approve_milestone(&client_addr, &id, &0u32).unwrap();
+    escrow.submit_milestone(
+        &contributor_addr,
+        &id,
+        &0u32,
+        &String::from_str(&env, "proof"),
+    );
+    escrow.approve_milestone(&client_addr, &id, &0u32);
     assert_eq!(balance(&env, &token_addr, &contributor_addr), 500);
 
     // Advance past deadline
     advance_ledger(&env, 101);
 
     // Contributor claims the remaining 500
-    escrow
-        .claim_after_deadline(&contributor_addr, &id)
-        .unwrap();
+    escrow.claim_after_deadline(&contributor_addr, &id);
 
     assert_eq!(balance(&env, &token_addr, &contributor_addr), 1000);
 }

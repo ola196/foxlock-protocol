@@ -35,7 +35,7 @@ fn test_dispute_full_to_contributor() {
     // Client raises dispute instead of approving
     escrow.raise_dispute(&client_addr, &id).unwrap();
 
-    let record = escrow.get_escrow(&id).unwrap();
+    let record = escrow.get_escrow(&id);
     assert_eq!(record.status, EscrowStatus::Disputed);
 
     // Arbitrator awards everything to contributor
@@ -44,7 +44,7 @@ fn test_dispute_full_to_contributor() {
     assert_eq!(balance(&env, &token_addr, &contributor_addr), 1000);
     assert_eq!(balance(&env, &token_addr, &client_addr), 0);
 
-    let resolved = escrow.get_escrow(&id).unwrap();
+    let resolved = escrow.get_escrow(&id);
     assert_eq!(resolved.status, EscrowStatus::Completed);
 }
 
@@ -98,7 +98,7 @@ fn test_dispute_partial_split() {
         &String::from_str(&env, "Dispute partial split"),
     ).unwrap();
 
-    escrow.raise_dispute(&client_addr, &id).unwrap();
+    escrow.raise_dispute(&client_addr, &id);
 
     // Arbitrator splits 70/30
     escrow.resolve_dispute(&arbitrator_addr, &id, &700i128, &300i128).unwrap();
@@ -199,4 +199,29 @@ fn test_cannot_dispute_completed_escrow() {
     // Try to raise dispute on completed escrow — should fail
     let result = escrow.try_raise_dispute(&client_addr, &id);
     assert_eq!(result, Err(Ok(EscrowError::InvalidStatus)));
+}
+
+#[test]
+fn test_unauthorized_cannot_raise_dispute() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let client_addr = Address::generate(&env);
+    let contributor_addr = Address::generate(&env);
+    let outsider = Address::generate(&env);
+    let admin = Address::generate(&env);
+    let (token_addr, sac) = deploy_token(&env, &admin);
+    mint(&env, &sac, &client_addr, 1000);
+
+    let escrow = deploy_escrow(&env);
+    let id = escrow.create_escrow(
+        &client_addr, &contributor_addr, &Address::generate(&env),
+        &token_addr, &two_milestones(&env),
+        &(env.ledger().sequence() + 1000),
+        &String::from_str(&env, "Unauthorized dispute"),
+    ).unwrap();
+
+    // Outsider tries to raise dispute — should fail
+    let result = escrow.try_raise_dispute(&outsider, &id);
+    assert_eq!(result, Err(Ok(EscrowError::Unauthorized)));
 }

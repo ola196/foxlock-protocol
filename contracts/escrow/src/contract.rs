@@ -79,8 +79,21 @@ impl EscrowContract {
                 .ok_or(EscrowError::InvalidAmount)?;
         }
 
-        // Transfer total funds from client to this contract
+        // Validate that `token` implements the SEP-0041 interface by probing
+        // `decimals()`. A non-token contract will return an error here, which
+        // we convert to InvalidToken before any funds move.
+        //
+        // `try_decimals()` returns `Result<Result<u32, _>, Result<_, _>>`:
+        //   outer Err  → host/invoke failure (contract doesn't exist or lacks the fn)
+        //   inner Err  → return-value conversion failure (shouldn't happen for u32)
+        // Both cases indicate the address is not a valid SEP-0041 token.
         let token_client = token::TokenClient::new(&env, &token);
+        match token_client.try_decimals() {
+            Ok(Ok(_)) => {} // valid SEP-0041 token
+            _ => return Err(EscrowError::InvalidToken),
+        }
+
+        // Transfer total funds from client to this contract
         token_client.transfer(&client, &env.current_contract_address(), &total_amount);
 
         // Generate new escrow ID

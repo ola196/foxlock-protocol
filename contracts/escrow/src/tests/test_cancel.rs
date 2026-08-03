@@ -25,17 +25,16 @@ fn test_cancel_refunds_client() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Cancel test"),
-        )
-        .unwrap();
+        );
 
     assert_eq!(balance(&env, &token_addr, &client_addr), 0);
 
-    escrow.cancel_escrow(&client_addr, &id).unwrap();
+    escrow.cancel_escrow(&client_addr, &id);
 
     // Funds returned in full
     assert_eq!(balance(&env, &token_addr, &client_addr), 1000);
 
-    let record = escrow.get_escrow(&id).unwrap();
+    let record = escrow.get_escrow(&id);
     assert_eq!(record.status, EscrowStatus::Cancelled);
 }
 
@@ -60,18 +59,15 @@ fn test_cancel_after_submission_fails() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Cancel after submit"),
-        )
-        .unwrap();
+        );
 
     // Contributor submits milestone 0
-    escrow
-        .submit_milestone(
-            &contributor_addr,
-            &id,
-            &0u32,
-            &String::from_str(&env, "ipfs://proof"),
-        )
-        .unwrap();
+    escrow.submit_milestone(
+        &contributor_addr,
+        &id,
+        &0u32,
+        &String::from_str(&env, "ipfs://proof"),
+    );
 
     // Client should NOT be able to cancel now
     let result = escrow.try_cancel_escrow(&client_addr, &id);
@@ -99,8 +95,7 @@ fn test_non_client_cannot_cancel() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Non-client cancel"),
-        )
-        .unwrap();
+        );
 
     let result = escrow.try_cancel_escrow(&impostor, &id);
     assert_eq!(result, Err(Ok(EscrowError::Unauthorized)));
