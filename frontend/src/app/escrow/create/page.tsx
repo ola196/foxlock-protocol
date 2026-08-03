@@ -99,7 +99,8 @@ export default function CreateEscrowPage() {
       );
 
       // Get current ledger sequence to compute absolute deadline
-      const { SorobanRpc } = await import("@stellar/stellar-sdk");
+      const { rpc: stellarRpc } = await import("@stellar/stellar-sdk");
+      void stellarRpc; // rpc namespace imported for side-effect typing check
       const { server } = await import("@/lib/stellar");
       const ledgerResponse = await server.getLatestLedger();
       const deadlineAbsolute =

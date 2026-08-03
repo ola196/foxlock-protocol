@@ -4,10 +4,13 @@
  * Provides typed wrappers for invoking the deployed escrow and reputation
  * contracts. All contract calls go through the Soroban RPC — no Horizon
  * needed for contract invocations.
+ *
+ * @stellar/stellar-sdk v13+ exports the RPC namespace as `rpc`
+ * (formerly `SorobanRpc` in v12 and below).
  */
 
 import {
-  SorobanRpc,
+  rpc,
   TransactionBuilder,
   Networks,
   BASE_FEE,
@@ -21,8 +24,7 @@ const RPC_URL =
   process.env.NEXT_PUBLIC_RPC_URL ?? "https://soroban-testnet.stellar.org";
 
 const NETWORK_PASSPHRASE =
-  process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE ??
-  Networks.TESTNET;
+  process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE ?? Networks.TESTNET;
 
 export const ESCROW_CONTRACT_ID =
   process.env.NEXT_PUBLIC_ESCROW_CONTRACT_ID ?? "";
@@ -30,7 +32,7 @@ export const ESCROW_CONTRACT_ID =
 export const REPUTATION_CONTRACT_ID =
   process.env.NEXT_PUBLIC_REPUTATION_CONTRACT_ID ?? "";
 
-export const server = new SorobanRpc.Server(RPC_URL, { allowHttp: false });
+export const server = new rpc.Server(RPC_URL, { allowHttp: false });
 
 /**
  * Build a Soroban contract invocation transaction, simulate it,
@@ -56,12 +58,12 @@ export async function buildContractCall(
   // Simulate to get the correct resource footprint + fee estimate
   const simResult = await server.simulateTransaction(tx);
 
-  if (SorobanRpc.Api.isSimulationError(simResult)) {
+  if (rpc.Api.isSimulationError(simResult)) {
     throw new Error(`Simulation failed: ${simResult.error}`);
   }
 
   // Assemble the final transaction with simulation results
-  const prepared = SorobanRpc.assembleTransaction(tx, simResult).build();
+  const prepared = rpc.assembleTransaction(tx, simResult).build();
   return prepared.toXDR();
 }
 
@@ -70,7 +72,7 @@ export async function buildContractCall(
  */
 export async function submitTransaction(
   signedXdr: string
-): Promise<SorobanRpc.Api.GetSuccessfulTransactionResponse> {
+): Promise<rpc.Api.GetSuccessfulTransactionResponse> {
   const txResult = await server.sendTransaction(
     TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE)
   );
@@ -84,7 +86,7 @@ export async function submitTransaction(
   let attempts = 0;
 
   while (
-    getResult.status === SorobanRpc.Api.GetTransactionStatus.NOT_FOUND &&
+    getResult.status === rpc.Api.GetTransactionStatus.NOT_FOUND &&
     attempts < 20
   ) {
     await new Promise((r) => setTimeout(r, 1500));
@@ -92,11 +94,11 @@ export async function submitTransaction(
     attempts++;
   }
 
-  if (getResult.status !== SorobanRpc.Api.GetTransactionStatus.SUCCESS) {
+  if (getResult.status !== rpc.Api.GetTransactionStatus.SUCCESS) {
     throw new Error(`Transaction did not succeed: ${getResult.status}`);
   }
 
-  return getResult as SorobanRpc.Api.GetSuccessfulTransactionResponse;
+  return getResult as rpc.Api.GetSuccessfulTransactionResponse;
 }
 
 /**
@@ -108,8 +110,9 @@ export async function queryContract<T>(
   args: xdr.ScVal[],
   parser: (val: xdr.ScVal) => T
 ): Promise<T> {
-  // Use a dummy account for simulation-only calls
-  const SIMULATION_SOURCE = "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN";
+  // Use a well-funded testnet account for simulation-only calls
+  const SIMULATION_SOURCE =
+    "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN";
 
   const account = await server.getAccount(SIMULATION_SOURCE).catch(() => {
     throw new Error("Cannot reach Stellar RPC — check your connection.");
@@ -125,12 +128,13 @@ export async function queryContract<T>(
     .build();
 
   const simResult = await server.simulateTransaction(tx);
-  if (SorobanRpc.Api.isSimulationError(simResult)) {
+  if (rpc.Api.isSimulationError(simResult)) {
     throw new Error(`Query simulation failed: ${simResult.error}`);
   }
 
-  const returnVal = (simResult as SorobanRpc.Api.SimulateTransactionSuccessResponse)
-    .result?.retval;
+  const returnVal = (
+    simResult as rpc.Api.SimulateTransactionSuccessResponse
+  ).result?.retval;
 
   if (!returnVal) {
     throw new Error("No return value from contract query");
@@ -141,17 +145,15 @@ export async function queryContract<T>(
 
 // ── ScVal helpers ─────────────────────────────────────────────────────────────
 
-export const toAddress = (addr: string) =>
+export const toAddress = (addr: string): xdr.ScVal =>
   new Address(addr).toScVal();
 
-export const toU64 = (n: bigint | number) =>
+export const toU64 = (n: bigint | number): xdr.ScVal =>
   xdr.ScVal.scvU64(xdr.Uint64.fromString(n.toString()));
 
-export const toU32 = (n: number) =>
-  xdr.ScVal.scvU32(n);
+export const toU32 = (n: number): xdr.ScVal => xdr.ScVal.scvU32(n);
 
-export const toI128 = (n: bigint) =>
+export const toI128 = (n: bigint): xdr.ScVal =>
   nativeToScVal(n, { type: "i128" });
 
-export const toString = (s: string) =>
-  xdr.ScVal.scvString(s);
+export const toString = (s: string): xdr.ScVal => xdr.ScVal.scvString(s);

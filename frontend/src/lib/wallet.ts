@@ -1,47 +1,42 @@
 /**
- * Wallet abstraction layer using Stellar Wallets Kit.
+ * Wallet abstraction layer using Stellar Wallets Kit v2.
  *
  * Stellar Wallets Kit provides a unified interface across Freighter,
  * xBull, Albedo, LOBSTR, and other Stellar wallets. This file wraps
  * it into a clean API consumed by the rest of the app.
  */
 
-import {
-  StellarWalletsKit,
-  WalletNetwork,
-  allowAllModules,
-  FREIGHTER_ID,
-} from "stellar-wallets-kit";
+import { StellarWalletsKit } from "@creit.tech/stellar-wallets-kit/sdk";
+import { defaultModules } from "@creit.tech/stellar-wallets-kit/modules/utils";
+import { Networks } from "@stellar/stellar-sdk";
 
-const NETWORK = (process.env.NEXT_PUBLIC_NETWORK === "mainnet"
-  ? WalletNetwork.PUBLIC
-  : WalletNetwork.TESTNET) as WalletNetwork;
+const NETWORK_PASSPHRASE: string =
+  process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE ??
+  (process.env.NEXT_PUBLIC_NETWORK === "mainnet"
+    ? Networks.PUBLIC
+    : Networks.TESTNET);
 
-// Singleton wallet kit instance
-let kit: StellarWalletsKit | null = null;
-
-export function getWalletKit(): StellarWalletsKit {
-  if (!kit) {
-    kit = new StellarWalletsKit({
-      network: NETWORK,
-      selectedWalletId: FREIGHTER_ID,
-      modules: allowAllModules(),
-    });
-  }
-  return kit;
+// Initialize the kit singleton once.
+// StellarWalletsKit.init is idempotent — safe to call multiple times.
+function ensureInit() {
+  StellarWalletsKit.init({ modules: defaultModules() });
 }
 
 /**
- * Open the wallet selection modal and return the connected public key.
+ * Open the wallet selection button/modal and return the connected public key.
+ * The v2 kit manages the UI via a web-component — call createButton to mount it.
  */
 export async function connectWallet(): Promise<string> {
-  const walletKit = getWalletKit();
-  await walletKit.openModal({
-    onWalletSelected: async (option) => {
-      walletKit.setWallet(option.id);
-    },
-  });
-  const { address } = await walletKit.getAddress();
+  ensureInit();
+
+  // Mount the connect button if not yet in DOM (no-op if already present).
+  const wrapper = document.querySelector<HTMLElement>("#swk-button-wrapper");
+  if (wrapper) {
+    StellarWalletsKit.createButton(wrapper);
+  }
+
+  const { address } = await StellarWalletsKit.getAddress();
+  if (!address) throw new Error("No wallet address returned");
   return address;
 }
 
@@ -50,8 +45,8 @@ export async function connectWallet(): Promise<string> {
  */
 export async function getConnectedAddress(): Promise<string | null> {
   try {
-    const walletKit = getWalletKit();
-    const { address } = await walletKit.getAddress();
+    ensureInit();
+    const { address } = await StellarWalletsKit.getAddress();
     return address || null;
   } catch {
     return null;
@@ -59,19 +54,15 @@ export async function getConnectedAddress(): Promise<string | null> {
 }
 
 /**
- * Sign and submit a Soroban XDR transaction.
- * Returns the signed XDR string ready for submission to the RPC.
+ * Sign a Soroban XDR transaction string and return the signed XDR.
  */
 export async function signTransaction(
   xdr: string,
   opts?: { networkPassphrase?: string; address?: string }
 ): Promise<string> {
-  const walletKit = getWalletKit();
-  const { signedTxXdr } = await walletKit.signTransaction(xdr, {
-    networkPassphrase:
-      opts?.networkPassphrase ??
-      process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE ??
-      "Test SDF Network ; September 2015",
+  ensureInit();
+  const { signedTxXdr } = await StellarWalletsKit.signTransaction(xdr, {
+    networkPassphrase: opts?.networkPassphrase ?? NETWORK_PASSPHRASE,
     address: opts?.address,
   });
   return signedTxXdr;
