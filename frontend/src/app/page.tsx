@@ -2,7 +2,7 @@
  * Home page — overview of the protocol and entry points.
  */
 import Link from "next/link";
-import { Shield, GitMerge, Star, Zap } from "lucide-react";
+import { Shield, GitMerge, Star, Zap, Trophy } from "lucide-react";
 
 const features = [
   {
@@ -83,6 +83,28 @@ export default function HomePage() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* Leaderboard CTA */}
+      <section className="card flex flex-col md:flex-row items-center gap-6">
+        <div className="w-14 h-14 rounded-xl bg-yellow-900/30 flex items-center justify-center shrink-0">
+          <Trophy className="w-7 h-7 text-yellow-400" aria-hidden="true" />
+        </div>
+        <div className="flex-1 text-center md:text-left">
+          <h2 className="text-xl font-semibold mb-1">FoxPoints Leaderboard</h2>
+          <p className="text-gray-400 text-sm">
+            See which contributors have earned the most FoxPoints across all
+            approved milestones. Tiers are tracked on-chain — Cub, Fox, Senior,
+            and Elite.
+          </p>
+        </div>
+        <Link
+          href="/leaderboard"
+          className="px-5 py-2.5 bg-yellow-600 hover:bg-yellow-500 text-white rounded-lg font-medium text-sm transition-colors whitespace-nowrap"
+          aria-label="View FoxPoints leaderboard"
+        >
+          View Leaderboard
+        </Link>
       </section>
 
       {/* Stats strip */}
