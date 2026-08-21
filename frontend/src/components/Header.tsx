@@ -47,6 +47,12 @@ export function Header() {
             Create
           </Link>
           <Link
+            href="/dashboard"
+            className="hover:text-white transition-colors"
+          >
+            Dashboard
+          </Link>
+          <Link
             href="/reputation"
             className="hover:text-white transition-colors"
           >

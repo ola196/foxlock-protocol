@@ -49,13 +49,20 @@ export default function HomePage() {
           <span className="text-white">GrantFox</span> — powering Web3
           collaboration with Soroban smart contracts.
         </p>
-        <div className="flex gap-4 justify-center">
+        <div className="flex flex-wrap gap-4 justify-center">
           <Link
             href="/escrow/create"
             className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors"
             aria-label="Create a new escrow agreement"
           >
             Create Escrow
+          </Link>
+          <Link
+            href="/dashboard"
+            className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
+            aria-label="View your personal escrow dashboard"
+          >
+            My Dashboard
           </Link>
           <Link
             href="/escrow"
