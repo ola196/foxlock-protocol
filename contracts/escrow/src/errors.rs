@@ -35,4 +35,6 @@ pub enum EscrowError {
     DeadlineNotReached = 12,
     /// Maximum milestone count exceeded (prevents DoS)
     TooManyMilestones = 13,
+    /// Token address does not implement the SEP-0041 token interface
+    InvalidToken = 14,
 }

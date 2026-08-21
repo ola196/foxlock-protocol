@@ -26,3 +26,6 @@ pub use types::{EscrowStatus, Milestone, MilestoneStatus};
 // Re-export the contract client for use in tests and frontend bindings
 #[cfg(any(test, feature = "testutils"))]
 pub use contract::EscrowContractClient;
+
+#[cfg(test)]
+mod tests;
