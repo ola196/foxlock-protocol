@@ -20,6 +20,7 @@ import { escrowCommands } from "./commands/escrow.js";
 import { milestoneCommands } from "./commands/milestone.js";
 import { reputationCommands } from "./commands/reputation.js";
 import { networkCommands } from "./commands/network.js";
+import { stellarWrapCommands } from "./commands/stellar-wrap.js";
 
 const program = new Command();
 
@@ -36,6 +37,7 @@ escrowCommands(program);
 milestoneCommands(program);
 reputationCommands(program);
 networkCommands(program);
+stellarWrapCommands(program);
 
 // Show help if no command provided
 program.addHelpText("after", `
@@ -45,10 +47,17 @@ ${chalk.yellow("Examples:")}
   ${chalk.cyan("$ foxlock reputation get --address G...")}
   ${chalk.cyan("$ foxlock escrow balance --id 1")}
 
+${chalk.bold("stellar-cli wrapper (requires: cargo install --locked stellar-cli):")}
+  ${chalk.cyan("$ foxlock stellar create-escrow --contributor G... --arbitrator G... --token C... --deadline 12345 --description 'My project' --milestones '[{\"title\":\"Design\",\"amount\":\"5000000\"}]' --source my-key")}
+  ${chalk.cyan("$ foxlock stellar submit-milestone --escrow 1 --index 0 --proof ipfs://Qm... --source my-key")}
+  ${chalk.cyan("$ foxlock stellar approve-milestone --escrow 1 --index 0 --source my-key")}
+  ${chalk.cyan("$ foxlock stellar check-balance --escrow 1")}
+
 ${chalk.yellow("Environment Variables:")}
   STELLAR_NETWORK           testnet | mainnet (default: testnet)
   STELLAR_RPC_URL           Soroban RPC endpoint
-  STELLAR_OPERATOR_SECRET   Secret key for signing transactions (S...)
+  STELLAR_OPERATOR_SECRET   Secret key for signing transactions (S...) — SDK commands
+  STELLAR_SOURCE_KEY        Named key or secret for stellar-cli wrapper commands
   ESCROW_CONTRACT_ID        Deployed escrow contract ID
   REPUTATION_CONTRACT_ID    Deployed reputation contract ID
 
