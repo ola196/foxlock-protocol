@@ -30,6 +30,7 @@ fn test_create_escrow_success() {
             &milestones,
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Test escrow"),
+            &0u32, // no cliff
         );
 
     assert_eq!(id, 1);
@@ -43,6 +44,7 @@ fn test_create_escrow_success() {
     assert_eq!(record.status, EscrowStatus::Active);
     assert_eq!(record.total_amount, 1000);
     assert_eq!(record.released_amount, 0);
+    assert_eq!(record.cliff_ledger, 0);
 }
 
 #[test]
@@ -68,6 +70,7 @@ fn test_create_escrow_invalid_deadline() {
         &two_milestones(&env),
         &0u32, // past deadline
         &String::from_str(&env, "Bad deadline"),
+        &0u32, // no cliff
     );
     assert_eq!(result, Err(Ok(EscrowError::InvalidDeadline)));
 }
@@ -95,6 +98,7 @@ fn test_create_escrow_empty_milestones() {
         &empty,
         &(env.ledger().sequence() + 1000),
         &String::from_str(&env, "No milestones"),
+        &0u32, // no cliff
     );
     assert_eq!(result, Err(Ok(EscrowError::EmptyMilestones)));
 }
@@ -120,6 +124,7 @@ fn test_escrow_count_increments() {
                 &two_milestones(&env),
                 &(env.ledger().sequence() + 1000),
                 &String::from_str(&env, "Multi"),
+                &0u32, // no cliff
             );
     }
 
@@ -151,6 +156,7 @@ fn test_create_invalid_token() {
         &two_milestones(&env),
         &(env.ledger().sequence() + 1000),
         &String::from_str(&env, "Invalid token test"),
+        &0u32, // no cliff
     );
 
     assert_eq!(result, Err(Ok(EscrowError::InvalidToken)));

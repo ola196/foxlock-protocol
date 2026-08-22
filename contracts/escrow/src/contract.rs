@@ -13,7 +13,7 @@ use crate::{
     errors::EscrowError,
     events,
     storage,
-    types::{EscrowRecord, EscrowStatus, Milestone, MilestoneStatus},
+    types::{DeadlineProposal, EscrowRecord, EscrowStatus, Milestone, MilestoneStatus},
 };
 
 /// Maximum milestones per escrow — prevents storage bloat and DoS.
@@ -37,6 +37,9 @@ impl EscrowContract {
     /// * `milestones`      – Ordered list of milestones with amounts
     /// * `deadline_ledger` – Ledger number after which contributor can claim
     /// * `description`     – Human-readable context for this escrow
+    /// * `cliff_ledger`    – Earliest ledger at which milestones may be submitted.
+    ///                       Pass 0 to disable (no cliff restriction).
+    ///                       Must be strictly less than `deadline_ledger` when non-zero.
     ///
     /// Returns the new escrow ID.
     pub fn create_escrow(
@@ -48,6 +51,7 @@ impl EscrowContract {
         milestones: Vec<Milestone>,
         deadline_ledger: u32,
         description: String,
+        cliff_ledger: u32,
     ) -> Result<u64, EscrowError> {
         // Authorization: client must sign this transaction
         client.require_auth();
@@ -60,6 +64,11 @@ impl EscrowContract {
             return Err(EscrowError::TooManyMilestones);
         }
         if deadline_ledger <= env.ledger().sequence() {
+            return Err(EscrowError::InvalidDeadline);
+        }
+        // Cliff, when set, must be strictly before the deadline so the window
+        // [cliff, deadline) is non-empty and the contributor has time to work.
+        if cliff_ledger != 0 && cliff_ledger >= deadline_ledger {
             return Err(EscrowError::InvalidDeadline);
         }
 
@@ -111,6 +120,7 @@ impl EscrowContract {
             deadline_ledger,
             status: EscrowStatus::Active,
             description,
+            cliff_ledger,
         };
         storage::set_escrow(&env, escrow_id, &record);
 
@@ -145,6 +155,11 @@ impl EscrowContract {
         }
         if record.status != EscrowStatus::Active {
             return Err(EscrowError::InvalidStatus);
+        }
+        // Enforce cliff: block submissions until the cliff ledger has been reached.
+        // cliff_ledger == 0 means no cliff is set.
+        if record.cliff_ledger != 0 && env.ledger().sequence() < record.cliff_ledger {
+            return Err(EscrowError::CliffNotReached);
         }
         if milestone_index >= record.milestones.len() {
             return Err(EscrowError::InvalidMilestone);
@@ -447,6 +462,113 @@ impl EscrowContract {
         );
 
         events::deadline_claim(&env, escrow_id, claimable);
+        Ok(())
+    }
+
+    // ── Deadline extension (mutual consent required) ─────────────────────────
+
+    /// Propose a new deadline for an active escrow.
+    ///
+    /// Either the client or the contributor may open a proposal. The other
+    /// party must then call `accept_deadline_extension` with the **same**
+    /// `new_deadline` value to confirm. Until accepted, the on-chain deadline
+    /// is not changed.
+    ///
+    /// Submitting a new proposal while one is already pending simply overwrites
+    /// it (and resets the required counter-signature).
+    ///
+    /// # Arguments
+    /// * `caller`        – Client or contributor (must match escrow record)
+    /// * `escrow_id`     – Target escrow
+    /// * `new_deadline`  – Proposed new deadline ledger number
+    pub fn propose_deadline_extension(
+        env: Env,
+        caller: Address,
+        escrow_id: u64,
+        new_deadline: u32,
+    ) -> Result<(), EscrowError> {
+        caller.require_auth();
+
+        let record = storage::get_escrow(&env, escrow_id)
+            .ok_or(EscrowError::NotFound)?;
+
+        // Only active escrows can have their deadline extended
+        if record.status != EscrowStatus::Active {
+            return Err(EscrowError::InvalidStatus);
+        }
+
+        // Only a party to the agreement can propose
+        if caller != record.client && caller != record.contributor {
+            return Err(EscrowError::Unauthorized);
+        }
+
+        // New deadline must be strictly later than the current deadline
+        if new_deadline <= record.deadline_ledger {
+            return Err(EscrowError::InvalidDeadline);
+        }
+
+        let proposal = DeadlineProposal {
+            new_deadline,
+            proposed_by: caller.clone(),
+        };
+        storage::set_deadline_proposal(&env, escrow_id, &proposal);
+
+        events::deadline_proposed(&env, escrow_id, &caller, new_deadline);
+        Ok(())
+    }
+
+    /// Accept a pending deadline extension proposal.
+    ///
+    /// Must be called by the **other** party (not the proposer), and the
+    /// `new_deadline` supplied must match the pending proposal exactly.
+    /// On success the escrow's `deadline_ledger` is updated and the proposal
+    /// is removed from storage.
+    ///
+    /// # Arguments
+    /// * `caller`        – The party accepting (must be the non-proposing party)
+    /// * `escrow_id`     – Target escrow
+    /// * `new_deadline`  – Must match the value in the pending proposal
+    pub fn accept_deadline_extension(
+        env: Env,
+        caller: Address,
+        escrow_id: u64,
+        new_deadline: u32,
+    ) -> Result<(), EscrowError> {
+        caller.require_auth();
+
+        let mut record = storage::get_escrow(&env, escrow_id)
+            .ok_or(EscrowError::NotFound)?;
+
+        if record.status != EscrowStatus::Active {
+            return Err(EscrowError::InvalidStatus);
+        }
+
+        // Only a party to the agreement can accept
+        if caller != record.client && caller != record.contributor {
+            return Err(EscrowError::Unauthorized);
+        }
+
+        let proposal = storage::get_deadline_proposal(&env, escrow_id)
+            .ok_or(EscrowError::DeadlineProposalNotFound)?;
+
+        // The acceptor must be the opposite party from the proposer
+        if caller == proposal.proposed_by {
+            return Err(EscrowError::Unauthorized);
+        }
+
+        // The accepted value must match exactly — prevents bait-and-switch
+        if new_deadline != proposal.new_deadline {
+            return Err(EscrowError::DeadlineProposalMismatch);
+        }
+
+        let old_deadline = record.deadline_ledger;
+        record.deadline_ledger = new_deadline;
+        storage::set_escrow(&env, escrow_id, &record);
+
+        // Proposal consumed — remove it so it cannot be replayed
+        storage::remove_deadline_proposal(&env, escrow_id);
+
+        events::deadline_extended(&env, escrow_id, old_deadline, new_deadline);
         Ok(())
     }
 

@@ -27,6 +27,7 @@ fn test_claim_after_deadline_succeeds() {
             &two_milestones(&env),
             &deadline,
             &String::from_str(&env, "Deadline test"),
+            &0u32, // no cliff
         );
 
     // Advance past deadline
@@ -62,6 +63,7 @@ fn test_claim_before_deadline_fails() {
             &two_milestones(&env),
             &deadline,
             &String::from_str(&env, "Too early"),
+            &0u32, // no cliff
         );
 
     // Only advance 50 ledgers (still before deadline)
@@ -93,6 +95,7 @@ fn test_partial_claim_after_deadline() {
             &two_milestones(&env),
             &deadline,
             &String::from_str(&env, "Partial deadline"),
+            &0u32, // no cliff
         );
 
     // Client approves first milestone (500 released)

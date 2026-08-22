@@ -27,6 +27,7 @@ fn test_full_happy_path() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Happy path"),
+            &0u32, // no cliff
         );
 
     // Submit milestone 0
@@ -78,6 +79,7 @@ fn test_reject_and_resubmit() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Reject test"),
+            &0u32, // no cliff
         );
 
     // Submit milestone 0
@@ -132,6 +134,7 @@ fn test_unauthorized_submit_fails() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Auth test"),
+            &0u32, // no cliff
         );
 
     // Impostor tries to submit
@@ -164,6 +167,7 @@ fn test_approve_non_submitted_milestone_fails() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Double approve test"),
+            &0u32, // no cliff
         );
 
     // Try to approve without submission

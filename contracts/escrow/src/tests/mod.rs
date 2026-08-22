@@ -7,6 +7,8 @@ mod test_milestones;
 mod test_dispute;
 mod test_cancel;
 mod test_deadline;
+mod test_deadline_extension;
+mod test_cliff_ledger;
 
 /// Shared test helpers used across all test modules.
 pub mod helpers {

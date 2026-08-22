@@ -67,3 +67,17 @@ pub fn deadline_claim(env: &Env, escrow_id: u64, amount: i128) {
         amount,
     );
 }
+
+pub fn deadline_proposed(env: &Env, escrow_id: u64, proposed_by: &Address, new_deadline: u32) {
+    env.events().publish(
+        (symbol_short!("DLPROP"), escrow_id),
+        (proposed_by.clone(), new_deadline),
+    );
+}
+
+pub fn deadline_extended(env: &Env, escrow_id: u64, old_deadline: u32, new_deadline: u32) {
+    env.events().publish(
+        (symbol_short!("DLEXT"), escrow_id),
+        (old_deadline, new_deadline),
+    );
+}

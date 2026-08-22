@@ -44,6 +44,21 @@ pub struct Milestone {
     pub proof_url: String,
 }
 
+/// A pending proposal to extend the escrow deadline.
+///
+/// One party (client or contributor) proposes a new deadline ledger.
+/// The other party must call `accept_deadline_extension` with the same
+/// `new_deadline` to confirm. Only then is the deadline updated.
+/// Any new proposal overwrites the previous one, resetting the process.
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct DeadlineProposal {
+    /// The proposed new deadline (ledger number)
+    pub new_deadline: u32,
+    /// Address of the party who created this proposal
+    pub proposed_by: Address,
+}
+
 /// The full escrow record stored on-chain.
 #[contracttype]
 #[derive(Clone, Debug)]
@@ -68,4 +83,9 @@ pub struct EscrowRecord {
     pub status: EscrowStatus,
     /// Optional human-readable description
     pub description: String,
+    /// Earliest ledger at which milestones may be submitted.
+    /// Set to 0 to disable the cliff (no restriction).
+    /// When non-zero, `submit_milestone` is blocked until
+    /// `env.ledger().sequence() >= cliff_ledger`.
+    pub cliff_ledger: u32,
 }

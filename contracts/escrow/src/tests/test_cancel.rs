@@ -25,6 +25,7 @@ fn test_cancel_refunds_client() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Cancel test"),
+            &0u32, // no cliff
         );
 
     assert_eq!(balance(&env, &token_addr, &client_addr), 0);
@@ -59,6 +60,7 @@ fn test_cancel_after_submission_fails() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Cancel after submit"),
+            &0u32, // no cliff
         );
 
     // Contributor submits milestone 0
@@ -95,6 +97,7 @@ fn test_non_client_cannot_cancel() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Non-client cancel"),
+            &0u32, // no cliff
         );
 
     let result = escrow.try_cancel_escrow(&impostor, &id);
