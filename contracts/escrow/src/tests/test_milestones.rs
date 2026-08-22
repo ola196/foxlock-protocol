@@ -5,13 +5,6 @@ use crate::errors::EscrowError;
 use crate::types::{EscrowStatus, MilestoneStatus};
 use super::helpers::*;
 
-fn setup(env: &Env) -> (
-    impl Fn() -> crate::EscrowContractClient,
-    Address, Address, Address, Address, u64,
-) {
-    todo!() // placeholder — tests below are self-contained
-}
-
 #[test]
 fn test_full_happy_path() {
     let env = Env::default();
@@ -34,37 +27,33 @@ fn test_full_happy_path() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Happy path"),
-        )
-        .unwrap();
+            &0u32, // no cliff
+        );
 
     // Submit milestone 0
-    escrow
-        .submit_milestone(
-            &contributor_addr,
-            &id,
-            &0u32,
-            &String::from_str(&env, "ipfs://Qm...design"),
-        )
-        .unwrap();
+    escrow.submit_milestone(
+        &contributor_addr,
+        &id,
+        &0u32,
+        &String::from_str(&env, "ipfs://Qm...design"),
+    );
 
     // Approve milestone 0 — 500 tokens released
-    escrow.approve_milestone(&client_addr, &id, &0u32).unwrap();
+    escrow.approve_milestone(&client_addr, &id, &0u32);
     assert_eq!(balance(&env, &token_addr, &contributor_addr), 500);
 
     // Submit and approve milestone 1 — final 500 tokens released
-    escrow
-        .submit_milestone(
-            &contributor_addr,
-            &id,
-            &1u32,
-            &String::from_str(&env, "ipfs://Qm...impl"),
-        )
-        .unwrap();
-    escrow.approve_milestone(&client_addr, &id, &1u32).unwrap();
+    escrow.submit_milestone(
+        &contributor_addr,
+        &id,
+        &1u32,
+        &String::from_str(&env, "ipfs://Qm...impl"),
+    );
+    escrow.approve_milestone(&client_addr, &id, &1u32);
     assert_eq!(balance(&env, &token_addr, &contributor_addr), 1000);
 
     // Escrow should be completed
-    let record = escrow.get_escrow(&id).unwrap();
+    let record = escrow.get_escrow(&id);
     assert_eq!(record.status, EscrowStatus::Completed);
     assert_eq!(record.released_amount, 1000);
 }
@@ -90,40 +79,36 @@ fn test_reject_and_resubmit() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Reject test"),
-        )
-        .unwrap();
+            &0u32, // no cliff
+        );
 
     // Submit milestone 0
-    escrow
-        .submit_milestone(
-            &contributor_addr,
-            &id,
-            &0u32,
-            &String::from_str(&env, "ipfs://bad-proof"),
-        )
-        .unwrap();
+    escrow.submit_milestone(
+        &contributor_addr,
+        &id,
+        &0u32,
+        &String::from_str(&env, "ipfs://bad-proof"),
+    );
 
     // Client rejects
-    escrow.reject_milestone(&client_addr, &id, &0u32).unwrap();
+    escrow.reject_milestone(&client_addr, &id, &0u32);
 
-    let record = escrow.get_escrow(&id).unwrap();
+    let record = escrow.get_escrow(&id);
     assert_eq!(
         record.milestones.get(0).unwrap().status,
         MilestoneStatus::Rejected
     );
 
     // Contributor resubmits with better proof
-    escrow
-        .submit_milestone(
-            &contributor_addr,
-            &id,
-            &0u32,
-            &String::from_str(&env, "ipfs://better-proof"),
-        )
-        .unwrap();
+    escrow.submit_milestone(
+        &contributor_addr,
+        &id,
+        &0u32,
+        &String::from_str(&env, "ipfs://better-proof"),
+    );
 
     // Client approves the second submission
-    escrow.approve_milestone(&client_addr, &id, &0u32).unwrap();
+    escrow.approve_milestone(&client_addr, &id, &0u32);
     assert_eq!(balance(&env, &token_addr, &contributor_addr), 500);
 }
 
@@ -149,8 +134,8 @@ fn test_unauthorized_submit_fails() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Auth test"),
-        )
-        .unwrap();
+            &0u32, // no cliff
+        );
 
     // Impostor tries to submit
     let result = escrow.try_submit_milestone(
@@ -182,8 +167,8 @@ fn test_approve_non_submitted_milestone_fails() {
             &two_milestones(&env),
             &(env.ledger().sequence() + 1000),
             &String::from_str(&env, "Double approve test"),
-        )
-        .unwrap();
+            &0u32, // no cliff
+        );
 
     // Try to approve without submission
     let result = escrow.try_approve_milestone(&client_addr, &id, &0u32);

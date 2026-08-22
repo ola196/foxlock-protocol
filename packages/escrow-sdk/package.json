@@ -1,0 +1,45 @@
+{
+  "name": "@foxlock/escrow-sdk",
+  "version": "0.1.0",
+  "description": "Typed TypeScript SDK for the FoxLock milestone escrow contract on Stellar Soroban",
+  "author": "VaultFox Protocol <dev@vaultfox.io>",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vaultfox-protocol/foxlock-protocol"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "@stellar/stellar-sdk": "^13.0.0"
+  },
+  "devDependencies": {
+    "@stellar/stellar-sdk": "13.3.0",
+    "typescript": "5.8.3"
+  },
+  "keywords": [
+    "stellar",
+    "soroban",
+    "escrow",
+    "smart-contract",
+    "sdk",
+    "foxlock"
+  ]
+}

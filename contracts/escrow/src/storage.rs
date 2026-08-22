@@ -4,7 +4,7 @@
 //! to audit storage usage and update TTL policies in one place.
 
 use soroban_sdk::{Env};
-use crate::types::EscrowRecord;
+use crate::types::{EscrowRecord, DeadlineProposal};
 
 // ── Storage key types ────────────────────────────────────────────────────────
 
@@ -69,4 +69,33 @@ pub fn increment_counter(env: &Env) -> u64 {
         .instance()
         .extend_ttl(PERSISTENT_TTL_LEDGERS, PERSISTENT_TTL_LEDGERS);
     next
+}
+
+/// Retrieve a pending deadline extension proposal for an escrow.
+/// Returns None if no proposal is pending.
+pub fn get_deadline_proposal(env: &Env, escrow_id: u64) -> Option<DeadlineProposal> {
+    env.storage()
+        .temporary()
+        .get(&(soroban_sdk::symbol_short!("DLPROP"), escrow_id))
+}
+
+/// Store a pending deadline extension proposal.
+///
+/// Stored in temporary storage: proposals expire after 7 days if not acted on,
+/// preventing stale proposals from being accepted long after they were made.
+pub fn set_deadline_proposal(env: &Env, escrow_id: u64, proposal: &DeadlineProposal) {
+    let key = (soroban_sdk::symbol_short!("DLPROP"), escrow_id);
+    // 7 days in ledgers (~5s per ledger): 7 * 24 * 60 * 12 = 120,960
+    const PROPOSAL_TTL: u32 = 120_960;
+    env.storage().temporary().set(&key, proposal);
+    env.storage()
+        .temporary()
+        .extend_ttl(&key, PROPOSAL_TTL, PROPOSAL_TTL);
+}
+
+/// Remove a pending deadline extension proposal (after acceptance or override).
+pub fn remove_deadline_proposal(env: &Env, escrow_id: u64) {
+    env.storage()
+        .temporary()
+        .remove(&(soroban_sdk::symbol_short!("DLPROP"), escrow_id));
 }

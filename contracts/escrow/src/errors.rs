@@ -35,4 +35,12 @@ pub enum EscrowError {
     DeadlineNotReached = 12,
     /// Maximum milestone count exceeded (prevents DoS)
     TooManyMilestones = 13,
+    /// Token address does not implement the SEP-0041 token interface
+    InvalidToken = 14,
+    /// No pending deadline extension proposal exists for this escrow
+    DeadlineProposalNotFound = 15,
+    /// The accepted new_deadline does not match the pending proposal
+    DeadlineProposalMismatch = 16,
+    /// Milestone submission attempted before the cliff ledger has been reached
+    CliffNotReached = 17,
 }
