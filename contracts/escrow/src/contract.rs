@@ -37,6 +37,9 @@ impl EscrowContract {
     /// * `milestones`      – Ordered list of milestones with amounts
     /// * `deadline_ledger` – Ledger number after which contributor can claim
     /// * `description`     – Human-readable context for this escrow
+    /// * `cliff_ledger`    – Earliest ledger at which milestones may be submitted.
+    ///                       Pass 0 to disable (no cliff restriction).
+    ///                       Must be strictly less than `deadline_ledger` when non-zero.
     ///
     /// Returns the new escrow ID.
     pub fn create_escrow(
@@ -48,6 +51,7 @@ impl EscrowContract {
         milestones: Vec<Milestone>,
         deadline_ledger: u32,
         description: String,
+        cliff_ledger: u32,
     ) -> Result<u64, EscrowError> {
         // Authorization: client must sign this transaction
         client.require_auth();
@@ -60,6 +64,11 @@ impl EscrowContract {
             return Err(EscrowError::TooManyMilestones);
         }
         if deadline_ledger <= env.ledger().sequence() {
+            return Err(EscrowError::InvalidDeadline);
+        }
+        // Cliff, when set, must be strictly before the deadline so the window
+        // [cliff, deadline) is non-empty and the contributor has time to work.
+        if cliff_ledger != 0 && cliff_ledger >= deadline_ledger {
             return Err(EscrowError::InvalidDeadline);
         }
 
@@ -111,6 +120,7 @@ impl EscrowContract {
             deadline_ledger,
             status: EscrowStatus::Active,
             description,
+            cliff_ledger,
         };
         storage::set_escrow(&env, escrow_id, &record);
 
@@ -145,6 +155,11 @@ impl EscrowContract {
         }
         if record.status != EscrowStatus::Active {
             return Err(EscrowError::InvalidStatus);
+        }
+        // Enforce cliff: block submissions until the cliff ledger has been reached.
+        // cliff_ledger == 0 means no cliff is set.
+        if record.cliff_ledger != 0 && env.ledger().sequence() < record.cliff_ledger {
+            return Err(EscrowError::CliffNotReached);
         }
         if milestone_index >= record.milestones.len() {
             return Err(EscrowError::InvalidMilestone);

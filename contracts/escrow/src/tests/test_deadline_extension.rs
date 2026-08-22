@@ -26,6 +26,7 @@ fn setup_escrow(env: &Env) -> (crate::EscrowContractClient, u64, Address, Addres
         &two_milestones(env),
         &deadline,
         &String::from_str(env, "Deadline extension test"),
+        &0u32, // no cliff
     );
 
     (escrow, id, client_addr, contributor_addr)
@@ -231,6 +232,7 @@ fn test_deadline_extended_allows_later_claim() {
         &two_milestones(&env),
         &initial_deadline,
         &String::from_str(&env, "Short deadline"),
+        &0u32, // no cliff
     );
 
     // Advance past initial deadline but not past the extended one

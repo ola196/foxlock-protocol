@@ -83,4 +83,9 @@ pub struct EscrowRecord {
     pub status: EscrowStatus,
     /// Optional human-readable description
     pub description: String,
+    /// Earliest ledger at which milestones may be submitted.
+    /// Set to 0 to disable the cliff (no restriction).
+    /// When non-zero, `submit_milestone` is blocked until
+    /// `env.ledger().sequence() >= cliff_ledger`.
+    pub cliff_ledger: u32,
 }

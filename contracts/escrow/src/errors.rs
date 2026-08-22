@@ -41,4 +41,6 @@ pub enum EscrowError {
     DeadlineProposalNotFound = 15,
     /// The accepted new_deadline does not match the pending proposal
     DeadlineProposalMismatch = 16,
+    /// Milestone submission attempted before the cliff ledger has been reached
+    CliffNotReached = 17,
 }

@@ -24,6 +24,7 @@ fn test_dispute_full_to_contributor() {
         &token_addr, &two_milestones(&env),
         &(env.ledger().sequence() + 1000),
         &String::from_str(&env, "Dispute full contributor"),
+        &0u32, // no cliff
     ).unwrap();
 
     // Contributor submits milestone
@@ -66,6 +67,7 @@ fn test_dispute_full_to_client() {
         &token_addr, &two_milestones(&env),
         &(env.ledger().sequence() + 1000),
         &String::from_str(&env, "Dispute full client"),
+        &0u32, // no cliff
     ).unwrap();
 
     // Contributor raises dispute
@@ -96,6 +98,7 @@ fn test_dispute_partial_split() {
         &token_addr, &two_milestones(&env),
         &(env.ledger().sequence() + 1000),
         &String::from_str(&env, "Dispute partial split"),
+        &0u32, // no cliff
     ).unwrap();
 
     escrow.raise_dispute(&client_addr, &id);
@@ -125,6 +128,7 @@ fn test_dispute_after_partial_release() {
         &token_addr, &two_milestones(&env),
         &(env.ledger().sequence() + 1000),
         &String::from_str(&env, "Dispute after partial"),
+        &0u32, // no cliff
     ).unwrap();
 
     // Client approves first milestone (500 released)
@@ -162,6 +166,7 @@ fn test_dispute_resolution_wrong_sum_fails() {
         &token_addr, &two_milestones(&env),
         &(env.ledger().sequence() + 1000),
         &String::from_str(&env, "Wrong sum"),
+        &0u32, // no cliff
     ).unwrap();
 
     escrow.raise_dispute(&client_addr, &id).unwrap();
@@ -188,6 +193,7 @@ fn test_cannot_dispute_completed_escrow() {
         &token_addr, &two_milestones(&env),
         &(env.ledger().sequence() + 1000),
         &String::from_str(&env, "Completed dispute"),
+        &0u32, // no cliff
     ).unwrap();
 
     // Complete the escrow
@@ -219,6 +225,7 @@ fn test_unauthorized_cannot_raise_dispute() {
         &token_addr, &two_milestones(&env),
         &(env.ledger().sequence() + 1000),
         &String::from_str(&env, "Unauthorized dispute"),
+        &0u32, // no cliff
     ).unwrap();
 
     // Outsider tries to raise dispute — should fail
